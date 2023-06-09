@@ -1,0 +1,360 @@
+import time
+import hmac
+import hashlib
+import requests
+import json
+import numpy as np
+
+# Define your API key and secret
+API_KEY = 'UwFcFpOKQr'
+API_SECRET = '743dd926882e8f97a8eda93e4ae157f1'
+
+# Define Bitso API URL
+API_URL = 'https://api.bitso.com/v3/'
+
+# Define your capital risk limit
+CAPITAL_LIMIT = 1000.0  # In USDT
+
+def get_signature(secret_key, http_method, request_path, json_payload, nonce):
+    # Create the prehash string by concatenating required parts
+    message = str(nonce) + http_method + request_path + json_payload
+
+    # Decode the secret key from hex
+    secret_key_bytes = bytes(secret_key, 'latin-1')
+
+    # Create a new HMAC SHA256 message
+    signature = hmac.new(secret_key_bytes, message.encode('utf-8'), hashlib.sha256)
+    return signature.hexdigest()
+
+def get_ticker(book):
+    endpoint = 'ticker/?book=' + book
+    response = requests.get(API_URL + endpoint)
+    return response.json()
+
+def place_order(book, side, order_type, major='0', minor='0', price='0'):
+    # Define the endpoint
+    endpoint = 'orders/'
+    
+    # Get the current Unix timestamp
+    nonce = str(int(time.time()))
+    
+    # Create the payload
+    payload = {
+        'book': book,
+        'side': side,
+        'type': order_type,
+        'major': major,
+        'minor': minor,
+        'price': price
+    }
+    
+    # Convert the payload to JSON
+    json_payload = json.dumps(payload)
+    
+    # Calculate the signature
+    signature = get_signature(API_SECRET, 'POST', endpoint, json_payload, nonce)
+
+    # Define the headers
+    headers = {
+        'Authorization': 'Bitso ' + API_KEY + ':' + nonce + ':' + signature,
+        'Content-Type': 'application/json'
+    }
+    
+    # Send the request to the Bitso API
+    response = requests.post(API_URL + endpoint, headers=headers, data=json_payload)
+    
+    # Return the response
+    return response.json()
+
+def calculate_position_size(price):
+    return min(CAPITAL_LIMIT / price, CAPITAL_LIMIT)
+
+# Define moving average parameters
+MOVING_AVERAGE_PERIOD = 8
+moving_average_prices = []
+
+while True:
+    # Get the latest BTC/USDT price
+    ticker = get_ticker('btc_usdt')
+    last_price = float(ticker['payload']['last'])
+
+    # Add the price to the moving average prices
+    moving_average_prices.append(last_price)
+    if len(moving_average_prices) > MOVING_AVERAGE_PERIOD:
+        moving_average_prices.pop(0)
+
+    # Calculate the moving average
+    moving_average = np.mean(moving_average_prices)
+
+    # Determine if the last price crossed the moving average
+    if len(moving_average_prices) >= 2:
+        prev_price = moving_average_prices[-2]
+        if last_price > moving_average and prev_price <= moving_average:
+            # The price crossed above the moving average, place a buy order
+            print('Price crossed above moving average, placing buy order')
+            position_size = calculate_position_size(last_price)
+            place_order('btc_usdt', 'buy', 'limit', major=str(positionAquí tienes un ejemplo de cómo podrías implementar la estrategia de media móvil y controlar el tamaño de la posición en tu bot de trading. Este ejemplo aún es bastante simple y no incluye ciertos aspectos importantes, como el manejo de errores. Por favor, úsalo como punto de partida y adáptalo a tus necesidades.
+
+```python
+import time
+import hmac
+import hashlib
+import requests
+import json
+import numpy as np
+
+# Define your API key and secret
+API_KEY = 'UwFcFpOKQr'
+API_SECRET = '743dd926882e8f97a8eda93e4ae157f1'
+
+# Define Bitso API URL
+API_URL = 'https://api.bitso.com/v3/'
+
+# Define your capital risk limit
+CAPITAL_LIMIT = 1000.0  # In USDT
+
+def get_signature(secret_key, http_method, request_path, json_payload, nonce):
+    # Create the prehash string by concatenating required parts
+    message = str(nonce) + http_method + request_path + json_payload
+
+    # Decode the secret key from hex
+    secret_key_bytes = bytes(secret_key, 'latin-1')
+
+    # Create a new HMAC SHA256 message
+    signature = hmac.new(secret_key_bytes, message.encode('utf-8'), hashlib.sha256)
+    return signature.hexdigest()
+
+def get_ticker(book):
+    endpoint = 'ticker/?book=' + book
+    response = requests.get(API_URL + endpoint)
+    return response.json()
+
+def place_order(book, side, order_type, major='0', minor='0', price='0'):
+    # Define the endpoint
+    endpoint = 'orders/'
+    
+    # Get the current Unix timestamp
+    nonce = str(int(time.time()))
+    
+    # Create the payload
+    payload = {
+        'book': book,
+        'side': side,
+        'type': order_type,
+        'major': major,
+        'minor': minor,
+        'price': price
+    }
+    
+    # Convert the payload to JSON
+    json_payload = json.dumps(payload)
+    
+    # Calculate the signature
+    signature = get_signature(API_SECRET, 'POST', endpoint, json_payload, nonce)
+
+    # Define the headers
+    headers = {
+        'Authorization': 'Bitso ' + API_KEY + ':' + nonce + ':' + signature,
+        'Content-Type': 'application/json'
+    }
+    
+    # Send the request to the Bitso API
+    response = requests.post(API_URL + endpoint, headers=headers, data=json_payload)
+    
+    # Return the response
+    return response.json()
+
+def calculate_position_size(price):
+    return min(CAPITAL_LIMIT / price, CAPITAL_LIMIT)
+
+# Define moving average parameters
+MOVING_AVERAGE_PERIOD = 8
+moving_average_prices = []
+
+while True:
+    # Get the latest BTC/USDT price
+    ticker = get_ticker('btc_usdt')
+    last_price = float(ticker['payload']['last'])
+
+    # Add the price to the moving average prices
+    moving_average_prices.append(last_price)
+    if len(moving_average_prices) > MOVING_AVERAGE_PERIOD:
+        moving_average_prices.pop(0)
+
+    # Calculate the moving average
+    moving_average = np.mean(moving_average_prices)
+
+    # Determine if the last price crossed the moving average
+    if len(moving_average_prices) >= 2:
+        prev_price = moving_average_prices[-2]
+        if last_price > moving_average and prev_price <= moving_average:
+            # The price crossed above the moving average, place a buy order
+            print('Price crossed above moving average, placing buy order')
+            position_size = calculate_position_size(last_price)
+            place_order('btc_usdt', 'buy', 'limit', major=str(positionEstoy de acuerdo, aquí tienes un código de ejemplo para implementar la estrategia que has mencionado. Este código está en Python, uno de los lenguajes más populares para este tipo de tareas debido a su simplicidad y a la gran cantidad de bibliotecas disponibles para procesamiento de datos y operaciones financieras.
+
+```python
+import requests
+import time
+import hmac
+import hashlib
+from statistics import mean
+
+API_URL = 'https://api.bitso.com/v3'
+API_KEY = 'UwFcFpOKQr'
+API_SECRET = '743dd926882e8f97a8eda93e4ae157f1'
+BOOK = 'btc_usdt'
+
+def create_signature(http_method, request_path, json_payload=''):
+    nonce = int(time.time() * 1000)
+    message = f'{nonce}{http_method}{request_path}{json_payload}'
+    return nonce, hmac.new(API_SECRET.encode(), message.encode(), hashlib.sha256).hexdigest()
+
+def get_balance():
+    http_method = 'GET'
+    request_path = '/balance/'
+    nonce, signature = create_signature(http_method, request_path)
+    headers = {'Authorization': f'Bitso {API_KEY}:{nonce}:{signature}'}
+    response = requests.get(API_URL + request_path, headers=headers)
+    return response.json()
+
+def place_order(side, price, amount):
+    http_method = 'POST'
+    request_path = '/orders/'
+    json_payload = json.dumps({
+        'book': BOOK,
+        'side': side,
+        'type': 'limit',
+        'price': str(price),
+        'major': str(amount)
+    })
+    nonce, signature = create_signature(http_method, request_path, json_payload)
+    headers = {'Authorization': f'Bitso {API_KEY}:{nonce}:{signature}'}
+    response = requests.post(API_URL + request_path, headers=headers, data=json_payload)
+    return response.json()
+
+def get_ticker():
+    return requests.get(API_URL + '/ticker/?book=' + BOOK).json()
+
+def get_last_price():
+    return float(get_ticker()['payload']['last'])
+
+moving_average_window = []
+while True:
+    last_price = get_last_price()
+    moving_average_window.append(last_price)
+    if len(moving_average_window) > 8:  # 8 minutes moving average
+        moving_average_window.pop(0)
+    moving_average = mean(moving_average_window)
+    print('Moving average:', moving_average)
+
+    balance = get_balance()
+    btc_balance = float(balance['payload']['balances']['btc']['available'])
+    usdt_balance = float(balance['payload']['balances']['usdt']['available'])
+
+    if last_price > moving_average and usdt_balance >= 1000:  # Buy condition
+        print('Placing buy order')
+        place_order('buy', last_price, 1000 / last_price)
+    elif last_price < moving_average and btc_balance > 0:  # Sell condition
+        print('Placing sell order')
+        place_order('sell', last_price, btc_balance)
+
+    time.sleep(180)  # 3 minutes sleep time
+import time
+import hmac
+import hashlib
+import requests
+import json
+import numpy as np
+
+# Define your API key and secret
+API_KEY = 'UwFcFpOKQr'
+API_SECRET = '743dd926882e8f97a8eda93e4ae157f1'
+
+# Define Bitso API URL
+API_URL = 'https://api.bitso.com/v3/'
+
+# Define your capital risk limit
+CAPITAL_LIMIT = 1000.0  # In USDT
+
+def get_signature(secret_key, http_method, request_path, json_payload, nonce):
+    # Create the prehash string by concatenating required parts
+    message = str(nonce) + http_method + request_path + json_payload
+
+    # Decode the secret key from hex
+    secret_key_bytes = bytes(secret_key, 'latin-1')
+
+    # Create a new HMAC SHA256 message
+    signature = hmac.new(secret_key_bytes, message.encode('utf-8'), hashlib.sha256)
+    return signature.hexdigest()
+
+def get_ticker(book):
+    endpoint = 'ticker/?book=' + book
+    response = requests.get(API_URL + endpoint)
+    return response.json()
+
+def place_order(book, side, order_type, major='0', minor='0', price='0'):
+    # Define the endpoint
+    endpoint = 'orders/'
+    
+    # Get the current Unix timestamp
+    nonce = str(int(time.time()))
+    
+    # Create the payload
+    payload = {
+        'book': book,
+        'side': side,
+        'type': order_type,
+        'major': major,
+        'minor': minor,
+        'price': price
+    }
+    
+    # Convert the payload to JSON
+    json_payload = json.dumps(payload)
+    
+    # Calculate the signature
+    signature = get_signature(API_SECRET, 'POST', endpoint, json_payload, nonce)
+
+    # Define the headers
+    headers = {
+        'Authorization': 'Bitso ' + API_KEY + ':' + nonce + ':' + signature,
+        'Content-Type': 'application/json'
+    }
+    
+    # Send the request to the Bitso API
+    response = requests.post(API_URL + endpoint, headers=headers, data=json_payload)
+    
+    # Return the response
+    return response.json()
+
+def calculate_position_size(price):
+    return min(CAPITAL_LIMIT / price, CAPITAL_LIMIT)
+
+# Define moving average parameters
+MOVING_AVERAGE_PERIOD = 8
+moving_average_prices = []
+
+while True:
+    # Get the latest BTC/USDT price
+    ticker = get_ticker('btc_usdt')
+    last_price = float(ticker['payload']['last'])
+
+    # Add the price to the moving average prices
+    moving_average_prices.append(last_price)
+    if len(moving_average_prices) > MOVING_AVERAGE_PERIOD:
+        moving_average_prices.pop(0)
+
+    # Calculate the moving average
+    moving_average = np.mean(moving_average_prices)
+
+    # Determine if the last price crossed the moving average
+    if len(moving_average_prices) >= 2:
+        prev_price = moving_average_prices[-2]
+        if last_price > moving_average and prev_price <= moving_average:
+            # The price crossed above the moving average, place a buy order
+            print('Price crossed above moving average, placing buy order')
+            position_size = calculate_position_size(last_price)
+            place_order('btc_usdt', 'buy', 'limit', major=str(position# Let's check the details for cancelling an order.
+click(6)
+
